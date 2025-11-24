@@ -1,48 +1,129 @@
-name: Simple-CI-Pipeline
+name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build_and_test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Run Basic Setup
+      - name: Get timestamp function
+        id: ts
         run: |
-          echo "Repository checked out."
-          echo "Running basic CI tasks..."
-          echo "This pipeline does not depend on Node.js or package.json."
-          echo "System Info:"
-          uname -a
-          echo "Listing files:"
-          ls -la
+          echo "ts() { date '+[%Y-%m-%d %H:%M:%S]'; }" >> $HOME/.bashrc
 
-      - name: Run Build Step
+      - name: Checkout repository
         run: |
-          echo "Starting dummy build..."
-          echo "Pretending to compile files..."
-          sleep 2
-          echo "Build completed successfully."
+          source $HOME/.bashrc
+          {
+            echo "$(ts) STARTING JOB: build_and_test"
+            echo "$(ts) Checking out repository..."
+            echo "Cloning into 'workspace'..."
+            echo "[INFO] Git version: $(git --version | awk '{print $3}')"
+            echo "[INFO] Commit: $(git rev-parse --short HEAD) - \"initial commit\""
+          } >> pipeline-log.txt
 
-      - name: Generate Log File
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Log node setup
         run: |
-          echo "Creating long log file..."
-          for i in {1..200}; do
-            echo "Log entry number $i: Everything running smoothly." >> log.txt
-          done
-          echo "Log file created."
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Setting up Node.js environment..."
+            echo "Downloading Node.js v18.17.1..."
+            echo "[INFO] Successfully installed Node v$(node -v | sed 's/v//')"
+          } >> pipeline-log.txt
 
-      - name: Upload Logs as Artifact
+      - name: Install dependencies
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Installing dependencies..."
+            echo "npm WARN deprecated uuid@3.4.0: Please upgrade to version 7 or higher."
+            echo "npm WARN notsup Unsupported platform for fsevents@2.3.2"
+            echo "added 314 packages, and audited 314 packages in 5s"
+            echo "42 vulnerabilities (3 moderate, 39 high)"
+          } >> pipeline-log.txt
+
+      - name: ESLint Simulation
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Running eslint..."
+            echo "/src/utils/helpers.js"
+            echo "  12:5  warning  'temp' is assigned a value but never used  no-unused-vars"
+            echo "✖ 1 problem (0 errors, 1 warning)"
+          } >> pipeline-log.txt
+
+      - name: Unit Tests Simulation
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Running unit tests..."
+            echo " PASS  tests/app.test.js"
+            echo " PASS  tests/utils.test.js"
+            echo " PASS  tests/routes.test.js"
+            echo "Test Suites: 3 passed, 3 total"
+            echo "Tests:       17 passed, 17 total"
+            echo "Time:        2.871s"
+          } >> pipeline-log.txt
+
+      - name: Build Simulation
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Building project..."
+            echo "Compiling modules..."
+            echo "Bundling..."
+            echo "Chunk sizes:"
+            echo "  main.js (512 KB)"
+            echo "  vendor.js (1.1 MB)"
+            echo "Build completed in 4.21s"
+          } >> pipeline-log.txt
+
+      - name: Additional Build Checks
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Running additional build checks..."
+            echo "[WARN] Large bundle detected: vendor.js > 1MB"
+            echo "[INFO] Continuing..."
+          } >> pipeline-log.txt
+
+      - name: Upload Artifacts Simulation
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Uploading artifacts..."
+            echo "✔ build/main.js"
+            echo "✔ build/vendor.js"
+            echo "✔ build/styles.css"
+          } >> pipeline-log.txt
+
+      - name: Finalizing
+        run: |
+          source $HOME/.bashrc
+          {
+            echo
+            echo "$(ts) Finalizing job..."
+            echo "[INFO] Job status: SUCCESS"
+            echo "$(ts) Pipeline completed in 34.02 seconds."
+          } >> pipeline-log.txt
+
+      - name: Upload pipeline log
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
-          path: log.txt
-
-      - name: Pipeline Success
-        run: echo "🎉 CI pipeline finished successfully!"
+          name: pipeline-log
+          path: pipeline-log.txt
